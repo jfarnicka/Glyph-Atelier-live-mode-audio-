@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Glyph Atelier</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <h1 class="brand"><em>Glyph</em> Atelier</h1>
+    <p class="tagline">Transcribing paintings into code: letters, dots, brush strokes and sound.</p>
+  </div>
+</header>
+
+<main class="atelier">
+  <!-- ============ CONTROLS ============ -->
+  <aside class="controls" aria-label="Settings">
+    <section class="block">
+      <h2 class="label">Painting</h2>
+      <label class="drop" id="drop" for="file">
+        <input type="file" id="file" accept="image/*">
+        <span class="drop-title">Drop a painting here</span>
+        <span class="drop-sub">or click to choose · paste works too</span>
+      </label>
+      <button type="button" class="link-btn" id="use-sample" hidden>Back to the sample painting</button>
+    </section>
+
+    <section class="block">
+      <h2 class="label">Transcription</h2>
+      <div class="modes" role="tablist" aria-label="Style">
+        <button type="button" role="tab" id="m-glyphs" data-mode="glyphs" aria-selected="true">Glyphs</button>
+        <button type="button" role="tab" id="m-halftone" data-mode="halftone" aria-selected="false">Halftone</button>
+        <button type="button" role="tab" id="m-strokes" data-mode="strokes" aria-selected="false">Strokes</button>
+      </div>
+
+      <div class="only" data-for="glyphs">
+        <label for="charset">Characters</label>
+        <select id="charset">
+          <option value="standard">Standard  .:-=+*#%@</option>
+          <option value="blocks">Blocks  ░▒▓█</option>
+          <option value="dots">Dots  ·∙•●</option>
+          <option value="slashes">Slashes  /\|X</option>
+          <option value="binary">Binary  01</option>
+          <option value="text">Your own text</option>
+        </select>
+        <div id="text-wrap" hidden>
+          <label for="text">Text woven into the picture</label>
+          <input type="text" id="text" value="SEA SUN SALT WIND" maxlength="200">
+        </div>
+      </div>
+
+      <div class="only" data-for="halftone" hidden>
+        <label for="dotSize">Dot size <output for="dotSize" id="o-dotSize"></output></label>
+        <input type="range" id="dotSize" min="0.4" max="1.6" step="0.05" value="1">
+      </div>
+
+      <div class="only" data-for="strokes" hidden>
+        <label for="strokeLength">Stroke length <output for="strokeLength" id="o-strokeLength"></output></label>
+        <input type="range" id="strokeLength" min="1" max="8" step="0.25" value="3">
+        <label for="strokes">Number of strokes <output for="strokes" id="o-strokes"></output></label>
+        <input type="range" id="strokes" min="1000" max="20000" step="500" value="8000">
+      </div>
+
+      <label for="cols">Resolution <output for="cols" id="o-cols"></output></label>
+      <input type="range" id="cols" min="30" max="220" step="2" value="110">
+    </section>
+
+    <section class="block">
+      <h2 class="label">Colour &amp; light</h2>
+      <div class="pair">
+        <div>
+          <span class="sublabel" id="lbl-colour">Colour</span>
+          <div class="seg" role="radiogroup" aria-labelledby="lbl-colour">
+            <button type="button" role="radio" data-colour="image" aria-checked="true">Painting</button>
+            <button type="button" role="radio" data-colour="mono" aria-checked="false">Ink</button>
+          </div>
+        </div>
+        <div>
+          <span class="sublabel" id="lbl-bg">Ground</span>
+          <div class="seg" role="radiogroup" aria-labelledby="lbl-bg">
+            <button type="button" role="radio" data-bg="dark" aria-checked="true">Dark</button>
+            <button type="button" role="radio" data-bg="light" aria-checked="false">Paper</button>
+          </div>
+        </div>
+      </div>
+      <label for="brightness">Brightness <output for="brightness" id="o-brightness"></output></label>
+      <input type="range" id="brightness" min="-0.5" max="0.5" step="0.02" value="0">
+      <label for="contrast">Contrast <output for="contrast" id="o-contrast"></output></label>
+      <input type="range" id="contrast" min="-0.6" max="1.5" step="0.05" value="0.2">
+      <label class="check" for="invert"><input type="checkbox" id="invert"> Invert light and dark</label>
+    </section>
+
+    <section class="block">
+      <h2 class="label">Motion</h2>
+      <label class="check" for="animate"><input type="checkbox" id="animate"> Animate</label>
+      <label for="intensity">Intensity <output for="intensity" id="o-intensity"></output></label>
+      <input type="range" id="intensity" min="0.2" max="2" step="0.1" value="1">
+    </section>
+  </aside>
+
+  <!-- ============ STAGE ============ -->
+  <section class="stage-col" aria-label="Transcribed painting">
+    <button type="button" class="go-live" id="go-live">
+      <span class="go-live-kicker"><span class="rec" aria-hidden="true"></span> V2 · Live mode</span>
+      <span class="go-live-title">Play it with music</span>
+      <span class="go-live-sub">Fullscreen visuals that react to a beat, your track or a YouTube tab</span>
+    </button>
+
+    <div class="toolbar">
+      <button type="button" class="btn primary" id="listen" aria-pressed="false">
+        <span class="ico" aria-hidden="true">▶</span> <span id="listen-label">Listen to the painting</span>
+      </button>
+      <button type="button" class="btn" id="compare">Hold to see original</button>
+      <button type="button" class="btn" id="copy-text">Copy as text</button>
+      <button type="button" class="btn" id="export">Export image</button>
+    </div>
+
+    <figure class="stage" id="stage">
+      <div class="frame" id="frame">
+        <canvas id="canvas" role="img" aria-label="The painting transcribed in glyphs"></canvas>
+        <div class="playhead" id="playhead" hidden></div>
+      </div>
+      <figcaption class="caption">
+        <span id="cap-title">Evening Sea</span>
+        <span id="cap-meta"></span>
+      </figcaption>
+    </figure>
+
+    <section class="how" aria-labelledby="how-h">
+      <h2 id="how-h" class="label">How this transcription works</h2>
+      <ol class="steps" id="steps"></ol>
+    </section>
+  </section>
+</main>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="ov-h">
+    <div class="sheet-head">
+      <h2 id="ov-h">Your transcription</h2>
+      <button type="button" class="btn" id="ov-close">Close</button>
+    </div>
+    <img id="ov-img" alt="Exported transcription">
+    <p class="hint">Right-click the image (or long-press on a phone) and choose “Save image”.</p>
+    <a class="btn primary" id="ov-download" download="glyph-atelier.png" href="#">Download PNG</a>
+  </div>
+</div>
+
+<!-- ============ LIVE MODE (v2) ============ -->
+<div class="live" id="live" hidden role="dialog" aria-modal="true" aria-label="Live mode" tabindex="-1">
+  <canvas id="live-canvas" aria-label="Live visuals reacting to music"></canvas>
+  <div class="hud">
+    <div class="hud-top">
+      <p class="hud-id">
+        <span class="rec" aria-hidden="true"></span>
+        <span>Glyph Atelier <b>Live</b></span>
+        <span class="hud-sep" aria-hidden="true">/</span>
+        <span id="hud-track">Demo beat</span>
+        <span class="beat-dot" id="beat-dot" aria-hidden="true"></span>
+      </p>
+      <div class="hud-row">
+        <button type="button" class="hb" id="live-play"><span id="live-play-label">Pause</span><kbd>Space</kbd></button>
+        <button type="button" class="hb" id="live-fs">Fullscreen<kbd>F</kbd></button>
+        <button type="button" class="hb" id="live-exit">Exit<kbd>Esc</kbd></button>
+      </div>
+    </div>
+
+    <div class="hud-bottom">
+      <p class="hud-msg" id="hud-msg" role="status"></p>
+      <div class="hud-grid">
+        <div class="hud-group">
+          <span class="hl">Sound</span>
+          <div class="hud-row">
+            <button type="button" class="hb" data-src="demo" aria-pressed="false">Demo beat</button>
+            <label class="hb" id="track-label" for="live-file" aria-pressed="false">Your track<input type="file" id="live-file" accept="audio/*,.mp3,.m4a,.wav"></label>
+            <button type="button" class="hb" data-src="tab" aria-pressed="false">YouTube tab</button>
+            <button type="button" class="hb" data-src="mic" aria-pressed="false">Mic</button>
+          </div>
+        </div>
+        <div class="hud-group">
+          <span class="hl">Style</span>
+          <div class="hud-row">
+            <button type="button" class="hb" data-lstyle="glyphs" aria-pressed="true">Glyphs<kbd>1</kbd></button>
+            <button type="button" class="hb" data-lstyle="halftone" aria-pressed="false">Halftone<kbd>2</kbd></button>
+            <button type="button" class="hb" data-lstyle="strokes" aria-pressed="false">Strokes<kbd>3</kbd></button>
+            <button type="button" class="hb" id="live-auto" aria-pressed="true">Auto<kbd>A</kbd></button>
+          </div>
+        </div>
+        <div class="hud-group">
+          <span class="hl">Look<kbd>L</kbd></span>
+          <div class="hud-row">
+            <button type="button" class="hb" data-look="original" aria-pressed="false">Original</button>
+            <button type="button" class="hb" data-look="neon" aria-pressed="true">Neon</button>
+            <button type="button" class="hb" data-look="infrared" aria-pressed="false">Infrared</button>
+            <button type="button" class="hb" data-look="ice" aria-pressed="false">Ice</button>
+          </div>
+        </div>
+        <div class="hud-group">
+          <span class="hl">FX</span>
+          <div class="hud-row">
+            <button type="button" class="hb" id="fx-trails" aria-pressed="true">Trails<kbd>T</kbd></button>
+            <button type="button" class="hb" id="fx-glitch" aria-pressed="true">Glitch<kbd>G</kbd></button>
+            <button type="button" class="hb warn" id="fx-flash" aria-pressed="false" title="Flashing light. Leave off if anyone is photosensitive.">Flashes ⚠</button>
+          </div>
+        </div>
+        <div class="meters" aria-hidden="true">
+          <span>Bass</span><i><b id="mb"></b></i>
+          <span>Mid</span><i><b id="mm"></b></i>
+          <span>High</span><i><b id="mh"></b></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="transcribe.js"></script>
+<script src="sound.js"></script>
+<script src="sample.js"></script>
+<script src="app.js"></script>
+<script src="live-audio.js"></script>
+<script src="live.js"></script>
+</body>
+</html>
